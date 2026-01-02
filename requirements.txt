@@ -1,0 +1,8 @@
+requests
+pandas
+beautifulsoup4
+snowflake-connector-python[pandas]
+firecrawl-py
+python-dotenv
+pyyaml
+schemachange

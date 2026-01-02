@@ -1,0 +1,13 @@
+pricemultifull: https://min-api.cryptocompare.com/data/pricemultifull?fsyms=BTC&tsyms=USD
+
+histoday: https://min-api.cryptocompare.com/data/v2/histoday?fsym=BTC&tsym=USD&limit={LIMIT}
+
+histohour: https://min-api.cryptocompare.com/data/v2/histohour?fsym=BTC&tsym=USD&limit={LIMIT}
+
+blockchain_balancedistribution: https://min-api.cryptocompare.com/data/blockchain/balancedistribution/histo/day?limit={LIMIT}&fsym=BTC&api_key={API_KEY}
+
+tradingsignals: https://min-api.cryptocompare.com/data/tradingsignals/intotheblock/latest?fsym=BTC&api_key={API_KEY}
+
+hourly_social_data: https://min-api.cryptocompare.com/data/social/coin/histo/hour?coinId=1182&limit={LIMIT}&api_key={API_KEY}
+
+news: https://min-api.cryptocompare.com/data/v2/news/?lang=EN&categories=BTC
