@@ -225,7 +225,6 @@ def process_and_save(key: str, url: str, api_key: str):
     if '{LIMIT}' in url:
         url = url.replace('{LIMIT}', str(limit_val))
 
-    logger.info(f"Fetching {key} from {url}...")
     try:
         response = requests.get(url)
         response.raise_for_status()
