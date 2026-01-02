@@ -159,14 +159,14 @@ def upload_and_fetch_from_snowflake(df, schema_name, table_name, unique_key=None
         df.columns = [c.upper().replace(' ', '_').replace('-', '_') for c in df.columns]
         
         # Check if table exists and get row count
-        table_exists, row_count = check_table_status(conn, table_name)
+        table_exists, row_count = check_table_status(conn, schema_name, table_name)
         
         if not table_exists:
             logger.error(f"Error: Table {table_name} does not exist. Please run schemachange first.")
             return df
 
         # Filter DF columns to match Snowflake table columns
-        table_cols = get_table_columns(conn, table_name)
+        table_cols = get_table_columns(conn, schema_name, table_name)
         if table_cols:
             original_cols = df.columns.tolist()
             matching_cols = [c for c in df.columns if c in table_cols]
@@ -183,12 +183,12 @@ def upload_and_fetch_from_snowflake(df, schema_name, table_name, unique_key=None
         if row_count >= 1 and unique_key and unique_key.upper() in df.columns:
             # Incremental load: Merge
             logger.info(f"Table {table_name} has {row_count} rows. Performing MERGE (Delta Load) on {unique_key}...")
-            perform_merge(conn, df, table_name, unique_key.upper())
+            perform_merge(conn, df, schema_name, table_name, unique_key.upper())
         else:
             # Bulk load or Append (no unique key)
             load_type = "Bulk Load (Empty Table)" if row_count == 0 else "Append (No Unique Key)"
             logger.info(f"Table {table_name} has {row_count} rows. Performing {load_type}...")
-            write_pandas(conn, df, table_name, auto_create_table=False, quote_identifiers=True)
+            write_pandas(conn, df, schema_name=schema_name, table_name=table_name, auto_create_table=False, quote_identifiers=True)
 
         # 2. Export (Full Dataset)
         sort_col = "TIMESTAMP" if "TIMESTAMP" in df.columns else ("TIME" if "TIME" in df.columns else df.columns[0])
