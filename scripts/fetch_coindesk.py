@@ -188,7 +188,49 @@ def upload_and_fetch_from_snowflake(df, schema_name, table_name, unique_key=None
             # Bulk load or Append (no unique key)
             load_type = "Bulk Load (Empty Table)" if row_count == 0 else "Append (No Unique Key)"
             logger.info(f"Table {table_name} has {row_count} rows. Performing {load_type}...")
-            write_pandas(conn, df, schema_name=schema_name, table_name=table_name, auto_create_table=False, quote_identifiers=True)
+            
+            # Use CSV upload method to avoid Windows temp file issues
+            import tempfile
+            import os as os_module
+            
+            # Create a temporary CSV file
+            with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False, newline='') as tmp_file:
+                tmp_path = tmp_file.name
+                df.to_csv(tmp_file, index=False, header=True)
+            
+            try:
+                cursor = conn.cursor()
+                
+                # Create internal stage if it doesn't exist
+                cursor.execute(f"CREATE TEMPORARY STAGE IF NOT EXISTS TEMP_STAGE")
+                
+                # Upload file to stage (convert to forward slashes for Snowflake)
+                upload_path = tmp_path.replace('\\', '/')
+                cursor.execute(f"PUT 'file://{upload_path}' @TEMP_STAGE AUTO_COMPRESS=FALSE OVERWRITE=TRUE")
+                
+                # Get filename
+                filename = os_module.path.basename(tmp_path)
+                
+                # Copy data from stage to table
+                columns = ', '.join([f'"{col}"' for col in df.columns])
+                
+                copy_sql = f"""
+                COPY INTO {schema_name}.{table_name} ({columns})
+                FROM @TEMP_STAGE/{filename}
+                FILE_FORMAT = (TYPE = CSV SKIP_HEADER = 1 FIELD_OPTIONALLY_ENCLOSED_BY = '"')
+                ON_ERROR = CONTINUE
+                """
+                
+                cursor.execute(copy_sql)
+                result = cursor.fetchone()
+                logger.info(f"Uploaded {result[1]} rows successfully to {schema_name}.{table_name}")
+                
+            finally:
+                # Clean up temp file
+                try:
+                    os_module.unlink(tmp_path)
+                except:
+                    pass
 
         # 2. Export (Full Dataset)
         sort_col = "TIMESTAMP" if "TIMESTAMP" in df.columns else ("TIME" if "TIME" in df.columns else df.columns[0])
