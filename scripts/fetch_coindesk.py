@@ -33,7 +33,7 @@ def load_config(path: str) -> dict:
 def get_api_key():
     from dotenv import load_dotenv
     load_dotenv()
-    return os.getenv('CRYPTOCOMPARE_API_KEY') or os.getenv('API_KEY')
+    return os.getenv('CRYPTOCOMPARE_API_KEY')
 
 def get_snowflake_conn():
     try:
